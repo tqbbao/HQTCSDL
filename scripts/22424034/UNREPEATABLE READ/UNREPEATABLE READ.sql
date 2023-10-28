@@ -1,0 +1,56 @@
+﻿CREATE PROC sp_DangNhap
+	@TenDangNhap NVARCHAR(50),
+	@MatKhau NVARCHAR(50)
+AS
+BEGIN TRAN
+	BEGIN TRY
+		IF NOT EXISTS (SELECT * FROM NGUOIDUNG WHERE TenDangNhap=@TenDangNhap)
+		BEGIN
+			PRINT @TenDangNhap + N' Không Tồn Tại'
+			ROLLBACK TRAN
+			RETURN 
+		END
+		IF NOT EXISTS (SELECT * FROM NGUOIDUNG WHERE TenDangNhap=@TenDangNhap AND MatKhau=@MatKhau)
+		BEGIN
+			PRINT N'Sai Mật Khẩu'
+			ROLLBACK TRAN
+			RETURN 
+		END
+		WAITFOR DELAY '00:00:20'
+		PRINT N'Đăng nhập thành công!'
+	END TRY
+	BEGIN CATCH
+		PRINT N'LỖI HỆ THỐNG'
+		ROLLBACK TRAN
+	END CATCH
+COMMIT TRAN
+
+GO
+
+CREATE PROC sp_DoiMatKhau
+	@TenDangNhap NVARCHAR(50),
+	@MatKhauMoi NVARCHAR(50)
+AS
+BEGIN TRAN
+	BEGIN TRY
+		UPDATE NGUOIDUNG 
+		SET MatKhau=@MatKhauMoi 
+		WHERE TenDangNhap=@TenDangNhap
+
+		IF @@ERROR != 0
+		BEGIN 
+			PRINT N'Có lỗi xảy ra khi cập nhật mật khẩu!'
+			ROLLBACK TRAN
+			RETURN 1
+		END
+
+		PRINT N'Đổi mật khẩu thành công!'
+	END TRY
+	BEGIN CATCH
+		PRINT N'LỖI HỆ THỐNG'
+		ROLLBACK TRAN
+		RETURN 1
+	END CATCH
+COMMIT TRAN
+RETURN 0
+GO
